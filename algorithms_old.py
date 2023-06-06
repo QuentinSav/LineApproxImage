@@ -4,32 +4,47 @@ import cv2
 import time
 
 
+def RGB_adaptor(method):
+    def inner(img, color):
+        if len(img.shape) == 2:
+            method(img, color='greyscale')
+
+        elif len(img.shape) == 3:
+            for k in range(3):
+                colors = ['red', 'green', 'blue']
+                method(img[:, :, k], color=colors[k])
+
+    return inner
+
+
 class LineApprox:
     """Parent class of the different algorithm"""
 
-    def __init__(self, target_img, n_lines=5000):
+    @RGB_adaptor
+    def __init__(self, target_img, color, n_lines=2000):
+
+        self.color = color
 
         # Hyperparameters
-        self.c = 0.1
+        self.hyper_c = 0.1
 
         # List of optimized lines
         self.lines = []
         self.costs = []
 
         # Image dimensions
-        self.m, self.n = target_img.shape
+        self.height, self.width, = target_img.shape
 
         # Total number of lines
         self.n_lines = n_lines
 
         # Invert, normalize and flip image
-        self.target_img = cv2.flip(1-self.normalize(target_img), 0)
+        self.target_img = 1-self.normalize(target_img)
 
         # Initialization of reconstruction img
-        self.recon_img = np.zeros([self.n, self.m])
+        self.recon_img = np.zeros([self.height, self.width])
 
-        print('Target image size ------------------')
-        print('n=', self.n, ', m=', self.m)
+        print('Target image size: width=', self.width, ', height=', self.height,)
 
     def normalize(self, img):
 
@@ -60,14 +75,14 @@ class LineApprox:
         self.lines.append(best_line)
 
         # Update the reconstructed image with the new line
-        self.recon_img = self.recon_img + best_line.reconstruct_line(self.m, self.n, self.c)
+        self.recon_img = self.recon_img + best_line.reconstruct_line(self.hyper_c)
 
     def show_end_result(self):
         fig, ax_array = plt.subplots(1, 3, subplot_kw={'aspect': 1}, sharex=True, sharey=True)
 
         ax_array[0].set_title("Target image")
         ax_array[0].imshow(self.target_img, cmap='Greys')
-        ax_array[0].axis([0, self.m, 0, self.m])
+        ax_array[0].axis([0, self.width, 0, self.height])
         ax_array[0].set_xticks([])
         ax_array[0].set_yticks([])
 
@@ -75,11 +90,11 @@ class LineApprox:
 
         ax_array[1].set_title("Line approximation image")
         for line in self.lines:
-            line.add_to_plot(ax_array[1], self.m, self.c)
+            line.add_to_plot(ax_array[1], self.hyper_c)
 
         ax_array[2].set_title("Reconstructed image")
         ax_array[2].imshow(self.recon_img, cmap='Greys')
-        ax_array[2].axis([0, self.m, 0, self.m])
+        ax_array[2].axis([0, self.width, 0, self.height])
         ax_array[2].set_xticks([])
         ax_array[2].set_yticks([])
 
@@ -94,7 +109,7 @@ class LineApproxBruteForce(LineApprox):
 
             # Display the progress
             if i and not i % 100:
-                print("Iteration ", i, "/", self.n_lines)
+                print("Iteration ", i+1, "/", self.n_lines)
 
             # Initialize an empty batch of line and an empty array for the costs
             batch_lines = []
@@ -105,10 +120,10 @@ class LineApproxBruteForce(LineApprox):
                 # t0 = time.time()
 
                 # Initialize a random line
-                line = Line([self.m, self.n])
+                line = Line([self.height, self.width])
 
                 # Reconstruct the line
-                recon_line = line.reconstruct_line(self.m, self.n, self.c)
+                recon_line = line.reconstruct_line(self.hyper_c)
 
                 # Compute the cost of the line
                 cost_batch_lines[k] = self.compute_cost(self.recon_img + recon_line)
@@ -144,8 +159,6 @@ class LineApproxHoughTransform(LineApprox):
 
 
             residual_img = self.target_img - self.recon_img
-
-
             lines = cv2.HoughLines(residual_img, 1, np.pi / 180, 150, None, 0, 0)
 
 
@@ -579,11 +592,11 @@ class LineApproxGD:
         
 class Line:
     def __init__(self, shape):
-        width, height = shape
+        self.height, self.width = shape
 
         # Initialize two random points in the image
-        p1 = [width * np.random.rand(), height * np.random.rand()]
-        p2 = [width * np.random.rand(), height * np.random.rand()]
+        p1 = [self.width * np.random.rand(), self.height * np.random.rand()]
+        p2 = [self.width * np.random.rand(), self.height * np.random.rand()]
 
         # Compute the parameters of the line passing by the points
         self.a = (p2[1] - p1[1]) / (p2[0] - p1[0])
@@ -611,41 +624,46 @@ class Line:
         # Returns the y value for the line parameters of the instance
         return self.a * x + self.b
 
-    def reconstruct_line(self, m, n, c, method='binary'):
+    def reconstruct_line(self, c, method='binary'):
         """Reconstruct a line in the image space"""
 
         if method == 'gaussian':
             # Create a meshgrid to compute values in plane more efficiently
-            m_arr, n_arr = np.meshgrid(range(m), range(n))
+            height_arr, width_arr  = np.meshgrid(range(self.height), range(self.width))
 
             # Computes the gaussian function
-            dist_from_line = (self.a * m_arr - n_arr + self.b) / np.sqrt(np.square(self.a) + 1)
+            dist_from_line = (self.a * width_arr - height_arr + self.b) / np.sqrt(np.square(self.a) + 1)
             recon_line = np.exp(-np.square(dist_from_line) / (2 * np.square(c)))
 
         elif method == 'binary':
             # Compute the starting and ending points of the line
             y0 = round(self.b)
-            y1 = round(m * self.a + self.b)
+            y1 = round(self.width * self.a + self.b)
             x0 = 0
-            x1 = m
+            x1 = self.width
 
             # Draw the line
-            recon_line = np.zeros([m, n])
+            recon_line = np.zeros([self.height, self.width])
             recon_line = cv2.line(recon_line, (x0, y0), (x1, y1), (1, 1, 1), 1)
+
+            #print("y = ", self.a, "x + ", self.b)
+            #plt.imshow(recon_line)
+            #plt.show()
 
         else:
             # Cover the case if an unknown method is passed as parameter
             print("Unknown method: Returning empty image")
-            recon_line = np.zeros([m, n])
+            recon_line = np.zeros([self.height, self.width])
 
         return recon_line
 
-    def add_to_plot(self, ax, m, c):
-
-        x = np.linspace(0, m, 3)
+    def add_to_plot(self, ax, c):
+        # Compute the value of the line on the left and right border of the image
+        x = np.linspace(0, self.width, 2)
         y = self.eval(x)
-        ax.plot(x, y, color='black', linewidth=c/5)
 
+        # Plot the line on the existing axe
+        ax.plot(x, y, color='black', linewidth=c/5)
 
 class Plot:
     pass

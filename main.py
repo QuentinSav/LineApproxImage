@@ -2,11 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
 import wire
-import algorithms
+import algorithms_old
 import cv2
 
-img = cv2.imread('yack.jpeg', cv2.IMREAD_GRAYSCALE)
 
+img = cv2.imread('yack.jpeg', cv2.IMREAD_GRAYSCALE)
+img = cv2.flip(img, 0)
 drawing = algorithms.LineApproxBruteForce(img)
 drawing.optimize()
 
