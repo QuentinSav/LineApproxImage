@@ -1,8 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
-import time
-
 
 class LineApprox:
     """Parent class of the different algorithm"""
@@ -30,8 +28,9 @@ class LineApprox:
         # Initialization of reconstruction img
         self.recon_img = np.zeros([self.height, self.width])
 
-    #@staticmethod
     def normalize(self, img):
+        """Function that returns the normalized image"""
+
         # Get the min and max pixel intensity in the image
         max_value = np.max(img)
         min_value = np.min(img)
@@ -47,6 +46,8 @@ class LineApprox:
         return normalized_img
 
     def compute_cost(self, recon_img=np.empty):
+        """Computes the squared error cost between an approximation and an image"""
+
         # Uses the instance reconstructed image if no image is passed as parameter
         if ~recon_img.any():
             recon_img = self.recon_img
@@ -55,6 +56,8 @@ class LineApprox:
         return np.sum(np.square(self.target_img - self.normalize(recon_img)))
 
     def update_recon_img(self, best_line):
+        """Function that updates the best line list and the current reconstruction image"""
+        
         # Add the best line to the list of lines
         self.lines.append(best_line)
 
@@ -62,7 +65,12 @@ class LineApprox:
         self.recon_img = self.recon_img + best_line.reconstruct_line(self.hyper_c)
 
     def show_end_result(self):
+        """Function to plot the final result"""
+
+        # Creates figure and axes
         fig, ax_array = plt.subplots(1, 3, subplot_kw={'aspect': 1}, sharex=True, sharey=True)
+
+        # Draw the target image
 
         ax_array[0].set_title("Target image")
         ax_array[0].imshow(self.target_img, cmap='Greys')
@@ -71,6 +79,8 @@ class LineApprox:
         ax_array[0].set_yticks([])
 
         fig.show()
+
+        # Draw all the computed lines
 
         ax_array[1].set_title("Line approximation image")
 
@@ -81,6 +91,9 @@ class LineApprox:
                 color = self.color
 
             line.add_to_plot(ax_array[1], self.hyper_c, color)
+
+
+        # Draw the pixelized reconstructed image
 
         ax_array[2].set_title("Reconstructed image")
         ax_array[2].imshow(self.recon_img, cmap='Greys')
@@ -133,7 +146,7 @@ class LineApproxRGB:
 
         plt.show()
 
-
+        
 class Optimizer:
     def __new__(cls, img):
         if len(img.shape) == 2:
@@ -249,14 +262,13 @@ class Line:
 
         return recon_line
 
+
     def add_to_plot(self, ax, c, color):
+
         # Compute the value of the line on the left and right border of the image
         x = np.linspace(0, self.width, 2)
         y = self.eval(x)
 
         # Plot the line on the existing axe
+
         ax.plot(x, y, color=color, linewidth=c/15)
-
-
-class Plot:
-    pass
