@@ -217,6 +217,23 @@ class OptimizerRGB(OptimizerGreyscale):
         return line_approx_rgb
 
 
+class OptimizerCMYK(OptimizerGreyscale):
+    def __init__(self, img):
+        self.img = img
+        self.line_approx_list = []
+
+    def run(self):
+        colors = ['cyan', 'magenta', 'yellow', 'black']
+
+        for k in range(4):
+            super().__init__(self.img[:, :, k], color=colors[k])
+            self.line_approx_list.append(super().run())
+
+        line_approx_rgb = LineApproxCMYK(self.line_approx_list)
+
+        return line_approx_cmyk
+
+
 class Line:
     def __init__(self, shape):
         self.height, self.width = shape

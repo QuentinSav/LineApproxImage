@@ -5,28 +5,37 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>my website</title>
-  </head>
-  <style>
-    body {
-        background-image: url('./front-end-img/nepal_summit.jpg');
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-        background-size: cover;
-    }
-    
-    a {
-        font-family: Garamond, serif;
-    }
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <style>
+      body {
+          background-image: url('./front-end-img/nepal_summit.jpg');
+          background-repeat: no-repeat;
+          background-attachment: fixed;
+          background-size: cover;
+      }
+      
+      a:hover { text-decoration: none; }
+      a:active { text-decoration: none; }
 
-  </style>
+      a {
+
+        background: #990;
+        border-radius: 10px;
+        color: #fff;
+        padding: 5px 10px;        
+      }
+  
+    </style>
+  </head>
+  
   <body>
     <nav>
-      <a href="./index.html">Home</a>
-      <a href="./cv.html">CV</a>
-      <a href="./contact.html">Contact</a>
-      <a href="./algorithm.html">Algorithm</a>
+
+      <a class="btn btn-info" role="button" href="./index.html">Home</a>
+      <a class="btn btn-info" role="button" href="./cv.html">CV</a>
+      <a class="btn btn-info" role="button" href="./contact.html">Contact</a>
+      <a class="btn btn-info" role="button" href="./algorithm.html">Algorithm</a>
     </nav>
-    
 
   </body>
 </html>
