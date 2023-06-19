@@ -18,14 +18,14 @@ def compute_time(func):
 
 def rgb_to_cmyk(img):
     img = img.astype(np.float64) / 255.
-    k = 1 - np.max(img, axis=2)
-    c = (1 - img[..., 2] - k) / (1 - k)
-    m = (1 - img[..., 1] - k) / (1 - k)
-    y = (1 - img[..., 0] - k) / (1 - k)
 
-    img_cmyk = (np.dstack((c, m, y, k)) * 255).astype(np.uint8)
+    c = (1 - img[..., 2])
+    m = (1 - img[..., 1])
+    y = (1 - img[..., 0])
 
-    return img_cmyk
+    img_cmy = (np.dstack((c, m, y)) * 255).astype(np.uint8)
+
+    return img_cmy
 
 
 class LineApprox:
@@ -188,7 +188,7 @@ class Optimizer:
             return OptimizerGreyscale(img, n_lines, color='greyscale')
 
         elif len(img.shape) == 3:
-            return OptimizerColor(img, n_lines, color_type='rgb')
+            return OptimizerColor(img, n_lines, color_type='cmy')
 
         elif len(img.shape) == 4:
             return OptimizerColor(img, n_lines, color_type='cmyk')
@@ -254,8 +254,8 @@ class OptimizerColor(OptimizerGreyscale):
         if self.color_type == 'rgb':
             colors = ['red', 'green', 'blue']
 
-        elif self.color_type == 'cmyk':
-            colors = ['cyan', 'magenta', 'yellow', 'black']
+        elif self.color_type == 'cmy':
+            colors = ['cyan', 'magenta', 'yellow']
 
         for k in range(len(colors)):
             super().__init__(self.img[:, :, k], self.n_lines, color=colors[k])
@@ -277,8 +277,8 @@ class Line:
 
         # Compute the parameters of the line passing by the points
         self.a = (p2[1] - p1[1]) / (p2[0] - p1[0])
-        self.b = p1[1] - self.a * p1[0]
-
+        self.b = p1[1] - self.a * p1  
+        
     #@compute_time
     def eval(self, x):
         # Returns the y value for the line parameters of the instance
@@ -323,4 +323,4 @@ class Line:
 
         # Plot the line on the existing axe
 
-        ax.plot(x, y, color=color, linewidth=c/15)
+        ax.plot(x, y, color=color, linewidth=c/2)
