@@ -1,11 +1,37 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
+from functools import wraps
+import time
+
+def compute_time(func):
+    @wraps(func)
+    def compute_time_wrapper(*args, **kwargs):
+        start_time = time.perf_counter()
+        result = func(*args, **kwargs)
+        end_time = time.perf_counter()
+        total_time = end_time - start_time
+        print(f'Function {func.__name__} Took {total_time:.4f} seconds')
+        return result
+    return compute_time_wrapper
+
+
+def rgb_to_cmyk(img):
+    img = img.astype(np.float64) / 255.
+    k = 1 - np.max(img, axis=2)
+    c = (1 - img[..., 2] - k) / (1 - k)
+    m = (1 - img[..., 1] - k) / (1 - k)
+    y = (1 - img[..., 0] - k) / (1 - k)
+
+    img_cmyk = (np.dstack((c, m, y, k)) * 255).astype(np.uint8)
+
+    return img_cmyk
+
 
 class LineApprox:
     """Parent class of the different algorithm"""
 
-    def __init__(self, target_img, color, n_lines=5000):
+    def __init__(self, target_img, n_lines, color):
 
         self.color = color
 
@@ -23,7 +49,7 @@ class LineApprox:
         self.n_lines = n_lines
 
         # Invert, normalize and flip image
-        self.target_img = 1 - self.normalize(target_img)
+        self.target_img = np.flipud(1 - self.normalize(target_img))
 
         # Initialization of reconstruction img
         self.recon_img = np.zeros([self.height, self.width])
@@ -104,14 +130,23 @@ class LineApprox:
         plt.show()
 
 
-class LineApproxRGB:
+class LineApproxColor:
     def __init__(self, line_approx_list):
-        if len(line_approx_list) != 3:
+        if len(line_approx_list) == 3:
+            self.r_line_approx = line_approx_list[0]
+            self.g_line_approx = line_approx_list[1]
+            self.b_line_approx = line_approx_list[2]
+
+        elif len(line_approx_list) == 4:
+            self.c_line_approx = line_approx_list[0]
+            self.m_line_approx = line_approx_list[1]
+            self.y_line_approx = line_approx_list[2]
+            self.k_line_approx = line_approx_list[3]
+
+        else:
             raise ValueError("Too many channels, cannot interpret as RGB image.")
 
-        self.r_line_approx = line_approx_list[0]
-        self.g_line_approx = line_approx_list[1]
-        self.b_line_approx = line_approx_list[2]
+
 
     def show_end_result(self):
 
@@ -148,21 +183,26 @@ class LineApproxRGB:
 
         
 class Optimizer:
-    def __new__(cls, img):
+    def __new__(cls, img, n_lines=5000):
         if len(img.shape) == 2:
-            return OptimizerGreyscale(img, color='greyscale')
+            return OptimizerGreyscale(img, n_lines, color='greyscale')
 
         elif len(img.shape) == 3:
-            return OptimizerRGB(img)
+            return OptimizerColor(img, n_lines, color_type='rgb')
+
+        elif len(img.shape) == 4:
+            return OptimizerColor(img, n_lines, color_type='cmyk')
 
         else:
             raise ValueError("Unsupported image format")
 
+
 class OptimizerGreyscale:
+    #@compute_time
+    def __init__(self, target_img, n_lines, color):
+        self.line_approx = LineApprox(target_img, n_lines, color)
 
-    def __init__(self, target_img, color, n_lines=200):
-        self.line_approx = LineApprox(target_img, color)
-
+    #@compute_time
     def run(self, n_random:int=100):
         """Function used to launch the optimization of the approximated image"""
 
@@ -200,24 +240,34 @@ class OptimizerGreyscale:
         return self.line_approx
 
 
-class OptimizerRGB(OptimizerGreyscale):
-    def __init__(self, img):
+class OptimizerColor(OptimizerGreyscale):
+    #@compute_time
+    def __init__(self, img, n_lines, color_type):
         self.img = img
+        self.n_lines = n_lines
+        self.color_type = color_type
         self.line_approx_list = []
 
+    #@compute_time
     def run(self):
-        colors = ['red', 'green', 'blue']
 
-        for k in range(3):
-            super().__init__(self.img[:, :, k], color=colors[k])
+        if self.color_type == 'rgb':
+            colors = ['red', 'green', 'blue']
+
+        elif self.color_type == 'cmyk':
+            colors = ['cyan', 'magenta', 'yellow', 'black']
+
+        for k in range(len(colors)):
+            super().__init__(self.img[:, :, k], self.n_lines, color=colors[k])
             self.line_approx_list.append(super().run())
 
-        line_approx_rgb = LineApproxRGB(self.line_approx_list)
+        line_approx_color = LineApproxColor(self.line_approx_list)
 
-        return line_approx_rgb
+        return line_approx_color
 
 
 class Line:
+    #@compute_time
     def __init__(self, shape):
         self.height, self.width = shape
 
@@ -229,10 +279,12 @@ class Line:
         self.a = (p2[1] - p1[1]) / (p2[0] - p1[0])
         self.b = p1[1] - self.a * p1[0]
 
+    #@compute_time
     def eval(self, x):
         # Returns the y value for the line parameters of the instance
         return self.a * x + self.b
 
+    #@compute_time
     def reconstruct_line(self, c, method='binary'):
         """Reconstruct a line in the image space"""
 
