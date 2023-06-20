@@ -17,15 +17,14 @@ def compute_time(func):
 
 
 def rgb_to_cmyk(img):
-    img = img.astype(np.float64) / 255.
+    k = 1 - np.max(img, axis=2)
+    c = (1-img[..., 2] - k)/(1-k)
+    m = (1-img[..., 1] - k)/(1-k)
+    y = (1-img[..., 0] - k)/(1-k)
 
-    c = (1 - img[..., 2])
-    m = (1 - img[..., 1])
-    y = (1 - img[..., 0])
+    img_cmyk = (np.dstack((c, m, y, k)) * 255).astype(np.uint8)
 
-    img_cmy = (np.dstack((c, m, y)) * 255).astype(np.uint8)
-
-    return img_cmy
+    return img_cmyk
 
 
 class LineApprox:
@@ -49,7 +48,7 @@ class LineApprox:
         self.n_lines = n_lines
 
         # Invert, normalize and flip image
-        self.target_img = np.flipud(1 - self.normalize(target_img))
+        self.target_img = np.flipud(self.normalize(target_img))
 
         # Initialization of reconstruction img
         self.recon_img = np.zeros([self.height, self.width])
@@ -144,13 +143,11 @@ class LineApproxColor:
             self.k_line_approx = line_approx_list[3]
 
         else:
-            raise ValueError("Too many channels, cannot interpret as RGB image.")
+            raise ValueError("Too many channels, cannot interpret as RGB image or CMYK.")
 
 
 
-    def show_end_result(self):
-
-        lines = self.r_line_approx.lines + self.g_line_approx.lines + self.b_line_approx.lines
+    def show_end_result_rgb(self):
 
         fig, ax_array = plt.subplots(1, 3, subplot_kw={'aspect': 1}, sharex=True, sharey=True)
 
@@ -181,6 +178,38 @@ class LineApproxColor:
 
         plt.show()
 
+
+    def show_end_result_cmyk(self):
+        
+        fig, ax_array = plt.subplots(1, 3, subplot_kw={'aspect': 1}, sharex=True, sharey=True)
+
+        ax_array[0].set_title("Target image")
+        ax_array[0].imshow(self.c_line_approx.target_img, cmap='Greys')
+        ax_array[0].axis([0, self.c_line_approx.width, 0, self.c_line_approx.height])
+        ax_array[0].set_xticks([])
+        ax_array[0].set_yticks([])
+
+        fig.show()
+
+        ax_array[1].set_title("Line approximation image")
+
+        for line_approx in [self.c_line_approx, self.m_line_approx, self.y_line_approx, self.k_line_approx]:
+            for line in line_approx.lines:
+                if line_approx.color == 'greyscale':
+                    color = 'black'
+                else:
+                    color = line_approx.color
+
+                line.add_to_plot(ax_array[1], self.c_line_approx.hyper_c, color)
+
+        ax_array[2].set_title("Reconstructed image")
+        ax_array[2].imshow(self.c_line_approx.recon_img, cmap='Greys')
+        ax_array[2].axis([0, self.c_line_approx.width, 0, self.c_line_approx.height])
+        ax_array[2].set_xticks([])
+        ax_array[2].set_yticks([])
+
+        plt.show()
+
         
 class Optimizer:
     def __new__(cls, img, n_lines=5000):
@@ -188,10 +217,13 @@ class Optimizer:
             return OptimizerGreyscale(img, n_lines, color='greyscale')
 
         elif len(img.shape) == 3:
-            return OptimizerColor(img, n_lines, color_type='cmy')
-
-        elif len(img.shape) == 4:
-            return OptimizerColor(img, n_lines, color_type='cmyk')
+            if img.shape[2] == 3:
+                print('Image type = ''rgb''')
+                return OptimizerColor(img, n_lines, color_type='rgb')
+            
+            elif img.shape[2] == 4:
+                print('Image type = ''cmyk''')
+                return OptimizerColor(img, n_lines, color_type='cmyk')
 
         else:
             raise ValueError("Unsupported image format")
@@ -245,25 +277,38 @@ class OptimizerColor(OptimizerGreyscale):
     def __init__(self, img, n_lines, color_type):
         self.img = img
         self.n_lines = n_lines
-        self.color_type = color_type
         self.line_approx_list = []
+
+        if color_type == 'rgb':
+            self.colors = ['red', 'green', 'blue']
+
+        elif color_type == 'cmyk':
+            self.colors = ['cyan', 'magenta', 'yellow', 'black']
 
     #@compute_time
     def run(self):
+        
+        self.compute_color_ratio()
 
-        if self.color_type == 'rgb':
-            colors = ['red', 'green', 'blue']
-
-        elif self.color_type == 'cmy':
-            colors = ['cyan', 'magenta', 'yellow']
-
-        for k in range(len(colors)):
-            super().__init__(self.img[:, :, k], self.n_lines, color=colors[k])
+        for k in range(len(self.colors)):
+            super().__init__(self.img[:, :, k], self.n_lines_colors[k], color=self.colors[k])
             self.line_approx_list.append(super().run())
 
         line_approx_color = LineApproxColor(self.line_approx_list)
 
         return line_approx_color
+
+    def compute_color_ratio(self):
+        
+        sum_colors = np.zeros(len(self.colors))
+
+        for k in range(len(self.colors)):
+            sum_colors[k] = np.sum(self.img[..., k])
+
+        weight_colors = sum_colors/np.sum(sum_colors)
+        print(weight_colors)
+        self.n_lines_colors = (self.n_lines * weight_colors).astype('uint')
+
 
 
 class Line:
@@ -277,8 +322,9 @@ class Line:
 
         # Compute the parameters of the line passing by the points
         self.a = (p2[1] - p1[1]) / (p2[0] - p1[0])
-        self.b = p1[1] - self.a * p1  
-        
+        self.b = p1[1] - self.a * p1[0]
+
+
     #@compute_time
     def eval(self, x):
         # Returns the y value for the line parameters of the instance
@@ -323,4 +369,4 @@ class Line:
 
         # Plot the line on the existing axe
 
-        ax.plot(x, y, color=color, linewidth=c/2)
+        ax.plot(x, y, color=color, linewidth=c/10)
