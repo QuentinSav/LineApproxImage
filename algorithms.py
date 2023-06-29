@@ -48,7 +48,7 @@ class LineApprox:
         self.n_lines = n_lines
 
         # Invert, normalize and flip image
-        self.target_img = np.flipud(self.normalize(target_img))
+        self.target_img = np.flipud(1- self.normalize(target_img))
 
         # Initialization of reconstruction img
         self.recon_img = np.zeros([self.height, self.width])
@@ -93,7 +93,7 @@ class LineApprox:
         """Function to plot the final result"""
 
         # Creates figure and axes
-        fig, ax_array = plt.subplots(1, 3, subplot_kw={'aspect': 1}, sharex=True, sharey=True)
+        fig, ax_array = plt.subplots(1, 2, subplot_kw={'aspect': 1}, sharex=True, sharey=True)
 
         # Draw the target image
 
@@ -119,12 +119,13 @@ class LineApprox:
 
 
         # Draw the pixelized reconstructed image
+        fig = plt.figure()
 
-        ax_array[2].set_title("Reconstructed image")
-        ax_array[2].imshow(self.recon_img, cmap='Greys')
-        ax_array[2].axis([0, self.width, 0, self.height])
-        ax_array[2].set_xticks([])
-        ax_array[2].set_yticks([])
+        plt.title("Reconstructed image")
+        plt.plot(self.costs)
+        plt.axis([0, self.n_lines, 0, np.max(self.costs)])
+        plt.ylabel("Cost")
+        plt.xlabel("Iteration")
 
         plt.show()
 
@@ -369,4 +370,4 @@ class Line:
 
         # Plot the line on the existing axe
 
-        ax.plot(x, y, color=color, linewidth=c/10)
+        ax.plot(x, y, color=color, linewidth=c/5)
