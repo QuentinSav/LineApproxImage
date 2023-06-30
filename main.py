@@ -9,6 +9,6 @@ img = cv2.imread('./img/oldman.jpg', cv2.IMREAD_GRAYSCALE)
 
 
 optimizer = algorithms.Optimizer(img, n_lines=5000)
-line_approx = optimizer.run()
+line_approx = optimizer.run_hough_transform()
 
 line_approx.show_end_result()
