@@ -273,34 +273,40 @@ class OptimizerGreyscale:
 
         return self.line_approx
             
-
+    @compute_time
     def run_hough_transform(self):
         
         for i in range(self.line_approx.n_lines):
 
             # Display the progress
-            if i and not (i + 1) % 100:
+            if i and not (i + 1) % 1:
                 print("Iteration ", (i + 1), "/", self.line_approx.n_lines)
 
             # Initialize an empty batch of line and an empty array for the costs
             batch_lines = []
 
             line = self.hough_transform()
+            
+            # Reconstruct the line
+            self.line_approx.update_recon_img(line)
 
-    
-    def hough_transform(self, n_theta=100, n_r=100):
+        return self.line_approx
+
+    @compute_time
+    def hough_transform(self, n_theta=100, n_r=50):
 
         theta = np.linspace(0, 2*np.pi, n_theta)
         r = np.linspace(0, np.sqrt(np.square(self.line_approx.height) + np.square(self.line_approx.width)), n_r)
-        H = np.zeros([n_theta, n_r])
-        
+        H = np.zeros([n_r, n_theta])
+        target_img = self.line_approx.target_img - self.line_approx.recon_img
+
         for x in range(self.line_approx.width):
             for y in range(self.line_approx.height):
-                H = H + self.line_approx.target_img[y, x] * self.line_approx.hyper_c/(self.line_approx.hyper_c + np.square(x*np.cos(theta) + y*np.sin(theta) - r[:, np.newaxis]))
+                H = H + target_img[y, x] * self.line_approx.hyper_c/(self.line_approx.hyper_c + np.square(x*np.cos(theta) + y*np.sin(theta) - r[:, np.newaxis]))
 
-        index = np.argmax(H)
-        best_theta = theta(index_theta)
-        best_r = r(index_r)
+        index_r, index_theta  = np.unravel_index(H.argmax(), H.shape)
+        best_theta = theta[index_theta]
+        best_r = r[index_r]
 
         return Line([self.line_approx.height, self.line_approx.width], theta=best_theta, r=best_r)
 
@@ -385,10 +391,19 @@ class Line:
 
         elif method == 'binary':
             # Compute the starting and ending points of the line
-            y0 = round(self.b)
-            y1 = round(self.width * self.a + self.b)
-            x0 = 0
-            x1 = self.width
+            eps = 1e-1
+
+            if self.a > eps and self.a < 2*np.pi -eps :
+                y0 = round(self.b)
+                y1 = round(self.width * self.a + self.b)
+                x0 = 0
+                x1 = self.width
+
+            else:
+                y0 = 0 
+                y1 = self.height
+                x0 = round(-self.b/self.a)
+                x1 = round((self.height - self.b)/self.a)
 
             # Draw the line
             recon_line = np.zeros([self.height, self.width])
