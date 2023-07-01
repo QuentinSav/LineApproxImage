@@ -300,9 +300,14 @@ class OptimizerGreyscale:
         H = np.zeros([n_r, n_theta])
         target_img = self.line_approx.target_img - self.line_approx.recon_img
 
-        for x in range(self.line_approx.width):
-            for y in range(self.line_approx.height):
-                H = H + target_img[y, x] * self.line_approx.hyper_c/(self.line_approx.hyper_c + np.square(x*np.cos(theta) + y*np.sin(theta) - r[:, np.newaxis]))
+        x = np.arange(self.line_approx.width)
+        y = np.arange(self.line_approx.height)
+
+        X, Y = np.meshgrid(x, y)
+
+        distances = X * np.cos(theta) + Y * np.sin(theta) - r[:, np.newaxis, np.newaxis]
+        denominator = self.line_approx.hyper_c + np.square(distances)
+        H = np.sum(target_img * self.line_approx.hyper_c / denominator)
 
         index_r, index_theta  = np.unravel_index(H.argmax(), H.shape)
         best_theta = theta[index_theta]
