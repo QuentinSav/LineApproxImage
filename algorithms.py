@@ -285,7 +285,11 @@ class OptimizerGreyscale:
             # Initialize an empty batch of line and an empty array for the costs
             batch_lines = []
 
-            line = self.hough_transform()
+            H = self.radon_transform()
+            
+            index_r, index_theta  = np.unravel_index(H.argmax(), H.shape)
+            best_theta = theta[index_theta]
+            best_r = r[index_r]
             
             # Reconstruct the line
             self.line_approx.update_recon_img(line)
@@ -315,6 +319,67 @@ class OptimizerGreyscale:
 
         return Line([self.line_approx.height, self.line_approx.width], theta=best_theta, r=best_r)
 
+    def radon_transform(self, n_theta=100, n_rho=50):
+        theta_array = np.linspace(0, np.pi, n_theta)
+        
+        diag = np.sqrt(np.square(self.line_approx.height) + np.square(self.line_approx.width))
+        rho_array = np.linspace(-diag, diag, n_rho)
+
+        g_radon = np.zeros([n_rho, n_theta])
+
+        for t in range(n_theta):
+            theta = theta_array[t]
+            x_min = -(self.line_approx.width)/2
+            y_min = -(self.line_approx.height)/2
+            delta_x = 1
+            cos_theta = np.cos(theta)
+            sin_theta = np.sin(theta)
+
+            rho_offset = x_min*(cos_theta + sin_theta)
+
+            if sin_theta > 1/np.sqrt(2):
+                alpha = - cos_theta/sin_theta
+                for r in range(n_rho):
+                    rho = rho_array[r]
+
+                    beta = (rho - rho_offset)/(delta_x*sin_theta)
+                    if alpha > 0:
+                        m_min = np.max([0, np.ceil(-(beta+1/2)/alpha)])
+                        m_max = np.min([self.line_approx.width - 1, np.floor((self.line_approx.height - 1/2 - beta)/alpha)])
+            
+                    else:
+                        m_min = np.max([0, np.ceil((self.line_approx.height - 1/2 - beta)/alpha)])
+                        m_max = np.max([self.line_approx.width - 1, np.floor(-(beta+1/2)/alpha)])
+
+                    sum = 0
+
+                    for m in np.arange(m_min, m_max+1):
+                        sum = sum + self.line_approx.target_img[m + x_min, np.round(alpha*m + beta) + y_min]
+
+                    g_radon[r, t] = delta_x*sum/sin_theta
+            
+            else:
+                alpha = - sin_theta/cos_theta
+                for r in range(n_rho):
+                    rho = rho_array[r]
+
+                    beta = (rho - rho_offset)/(delta_x*cos_theta)
+                    if alpha > 0:
+                        n_min = np.max([0, np.ceil(-(beta+1/2)/alpha)])
+                        n_max = np.min([self.line_approx.width - 1, np.floor((self.line_approx.height - 1/2 - beta)/alpha)])
+            
+                    else:
+                        n_min = np.max([0, np.ceil((self.line_approx.height - 1/2 - beta)/alpha)])
+                        n_max = np.max([self.line_approx.width - 1, np.floor(-(beta+1/2)/alpha)])
+
+                    sum = 0
+
+                    for n in np.arange(n_min, n_max+1):
+                        sum = sum + self.line_approx.target_img[np.round(alpha*n + beta) + x_min, n + y_min]
+
+                    g_radon[r, t] = delta_x*sum/sin_theta
+            
+        return g_radon
 
 class OptimizerColor(OptimizerGreyscale):
     #@compute_time
