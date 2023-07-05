@@ -320,7 +320,7 @@ class OptimizerGreyscale:
         return Line([self.line_approx.height, self.line_approx.width], theta=best_theta, r=best_r)
 
     def radon_transform(self, n_theta=100, n_rho=50):
-        theta_array = np.linspace(0, np.pi, n_theta)
+        theta_array = np.linspace(1e-3, np.pi, n_theta)
         
         diag = np.sqrt(np.square(self.line_approx.height) + np.square(self.line_approx.width))
         rho_array = np.linspace(-diag, diag, n_rho)
@@ -353,10 +353,8 @@ class OptimizerGreyscale:
 
                     sum = 0
 
-                    for m in np.arange(m_min, m_max+1):
-                        sum = sum + self.line_approx.target_img[m + x_min, np.round(alpha*m + beta) + y_min]
-
-                    g_radon[r, t] = delta_x*sum/sin_theta
+                    m = np.arange(m_min, m_max)
+                    g_radon[r, t] = delta_x*np.sum(self.line_approx.target_img[(m).astype('uint16'), (np.round(alpha*m + beta)).astype('uint16')])/sin_theta
             
             else:
                 alpha = - sin_theta/cos_theta
@@ -366,18 +364,16 @@ class OptimizerGreyscale:
                     beta = (rho - rho_offset)/(delta_x*cos_theta)
                     if alpha > 0:
                         n_min = np.max([0, np.ceil(-(beta+1/2)/alpha)])
-                        n_max = np.min([self.line_approx.width - 1, np.floor((self.line_approx.height - 1/2 - beta)/alpha)])
+                        n_max = np.min([self.line_approx.height - 1, np.floor((self.line_approx.width - 1/2 - beta)/alpha)])
             
                     else:
-                        n_min = np.max([0, np.ceil((self.line_approx.height - 1/2 - beta)/alpha)])
-                        n_max = np.max([self.line_approx.width - 1, np.floor(-(beta+1/2)/alpha)])
+                        n_min = np.max([0, np.ceil((self.line_approx.width - 1/2 - beta)/alpha)])
+                        n_max = np.max([self.line_approx.height - 1, np.floor(-(beta+1/2)/alpha)])
 
                     sum = 0
 
-                    for n in np.arange(n_min, n_max+1):
-                        sum = sum + self.line_approx.target_img[np.round(alpha*n + beta) + x_min, n + y_min]
-
-                    g_radon[r, t] = delta_x*sum/sin_theta
+                    n = np.arange(n_min, n_max)
+                    g_radon[r, t] = delta_x*np.sum(self.line_approx.target_img[(np.round(alpha*n - beta)).astype('uint16'), (n).astype('uint16')])/np.abs(cos_theta)
             
         return g_radon
 
