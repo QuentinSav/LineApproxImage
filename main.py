@@ -8,7 +8,7 @@ img = cv2.imread('./img/oldman.jpg', cv2.IMREAD_GRAYSCALE)
 #img = algorithms.rgb_to_cmyk(img)
 
 
-optimizer = algorithms.Optimizer(img, n_lines=5000)
-line_approx = optimizer.run_hough_transform()
+optimizer = algorithms.Optimizer(img, n_lines=3000)
+line_approx = optimizer.run()
 
 line_approx.show_end_result()

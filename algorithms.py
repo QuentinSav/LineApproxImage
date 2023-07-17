@@ -429,13 +429,13 @@ class Line:
         self.a = (p2[1] - p1[1]) / (p2[0] - p1[0])
         self.b = p1[1] - self.a * p1[0]
 
-    def __init__(self, shape, theta, r):
-        self.height, self.width = shape
-        self.theta = theta
-        self.r = r
-        
-        self.a = - np.cos(theta)/np.sin(theta)
-        self.b = r/np.sin(theta)
+    #def __init__(self, shape, theta, r):
+    #    self.height, self.width = shape
+    #    self.theta = theta
+    #    self.r = r
+    #    
+    #    self.a = - np.cos(theta)/np.sin(theta)
+    #    self.b = r/np.sin(theta)
         
 
     #@compute_time

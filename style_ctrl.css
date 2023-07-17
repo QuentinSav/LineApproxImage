@@ -1,0 +1,23 @@
+.algo-box {
+  margin: px;
+}
+
+#line-approx-plot {
+  width: 50%;
+  height: 100%;
+  float: left;
+  border-color: rgba(212, 202, 205, 1);
+  border-style: solid;
+}
+
+#line-approx-ctrl {
+  left: 50%;
+  right: 0;
+  bottom: 0;
+  float: left;
+  position: absolute;
+  border-color: rgba(212, 202, 205, 1);
+  border-style: solid;
+
+}
+

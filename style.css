@@ -1,0 +1,185 @@
+html{
+    margin-top: 0;
+}
+
+body {
+    font-family: 'Inter Tight';
+    min-height: 100vh;
+    display: flex;
+    
+    background-image: linear-gradient(to bottom, rgb(12, 16, 21), rgb(0, 0, 0));
+}
+
+h1 {
+    color: rgba(212, 202, 205, 1);
+}
+
+p {
+    color: rgba(212, 202, 205, 1);
+}
+
+.algo-box {
+    top: 20%;
+    left: 20%;
+    width: 60%;
+    height: 60%;
+    position: absolute;
+    margin: 100px;
+}
+
+
+
+.church-img {
+    object-position: 0% 0%;
+    opacity: 1;
+}
+
+.cave-img {
+    object-position: -500px 0px;
+    opacity: 1;
+}
+
+.surf-img {
+    object-position: -600px 0px;
+    opacity: 1;
+}
+
+.tumbs-img {
+    object-position: -500px 0px;
+    opacity: 1;
+}
+
+.label {
+    padding-top: 5px;
+    text-align: left;
+    font-family: 'Inter Tight';
+    font-weight: 200;
+    color: rgb(212, 202, 205);
+    opacity: 0;
+}
+
+.box:hover .label {
+    opacity: 1;
+}
+
+.box {
+    flex: 1;
+    width: 25%;
+    height: 100%;
+    background-color: rgba(0, 0, 255, 0);
+    opacity: 1;
+    margin-left: 0;
+    overflow: hidden;
+    transition: all 1s;
+}
+
+.box.active {
+    flex: 0 0 100%;
+}
+
+.image {
+    transition: all 1s;
+}
+
+.box.active .image {
+    object-position: 0px 0px;
+}
+
+.container {
+    display: flex;
+    width: 60vw;
+    height: 60vh;
+    top: 20vh;
+    left: 20vw;
+    background-color: rgba(255, 255, 255, 0);
+    opacity: 1;
+    position: absolute;
+    text-align: center;
+    overflow: hidden;
+}
+
+#footer-placeholder {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 100px;  
+    z-index: 111;
+    text-align: right; 
+    padding-right: 50px;  
+}
+
+.rotate-icon-gif{
+    -webkit-animation-name: spin_out;
+    -webkit-animation-duration: 1s;
+    -webkit-animation-iteration-count: 1;
+    -webkit-animation-timing-function: ease-in-out;
+    -moz-animation-name: spin_out;
+    -moz-animation-duration: 1s;
+    -moz-animation-iteration-count: 1;
+    -moz-animation-timing-function: ease-in-out;
+    -ms-animation-name: spin_out;
+    -ms-animation-duration: 1000ms;
+    -ms-animation-iteration-count: 1;
+    -ms-animation-timing-function: ease-in-out;
+
+    animation-name: spin_out;
+    animation-duration: 1000ms;
+    animation-iteration-count: 1;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both
+}  
+
+.rotate-icon-gif:hover{
+    -webkit-animation-name: spin_in;
+    -webkit-animation-duration: 500ms;
+    -webkit-animation-iteration-count: 1;
+    -webkit-animation-timing-function: ease-in-out;
+    -moz-animation-name: spin_in;
+    -moz-animation-duration: 500ms;
+    -moz-animation-iteration-count: 1;
+    -moz-animation-timing-function: ease-in-out;
+    -ms-animation-name: spin_in;
+    -ms-animation-duration: 500ms;
+    -ms-animation-iteration-count: 1;
+    -ms-animation-timing-function: ease-in-out;
+
+    animation-name: spin_in;
+    animation-duration: 500ms;
+    animation-iteration-count: 1;
+    animation-timing-function: ease-in-out;
+    animation-fill-mode: both
+}
+
+@-ms-keyframes spin_in {
+    from { -ms-transform: rotate(0deg); }
+    to { -ms-transform: rotate(180deg); }
+}
+@-moz-keyframes spin_in {
+    from { -moz-transform: rotate(0deg); }
+    to { -moz-transform: rotate(180deg); }
+}
+@-webkit-keyframes spin_in {
+    from { -webkit-transform: rotate(0deg); }
+    to { -webkit-transform: rotate(180deg); }
+}
+@keyframes spin_in {
+    from { transform:rotate(0deg); }
+    to { transform:rotate(180deg); }
+}
+
+@-ms-keyframes spin_out {
+    from { -ms-transform: rotate(-180deg); }
+    to { -ms-transform: rotate(0deg); }
+}
+@-moz-keyframes spin_out {
+    from { -moz-transform: rotate(-180deg); }
+    to { -moz-transform: rotate(0deg); }
+}
+@-webkit-keyframes spin_out {
+    from { -webkit-transform: rotate(-180deg); }
+    to { -webkit-transform: rotate(0deg); }
+}
+@keyframes spin_out {
+    from { transform:rotate(-180deg); }
+    to { transform:rotate(0deg); }
+}

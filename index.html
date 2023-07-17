@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>Portfolio Homepage</title>
+
+    <!-- Bootstrap CSS CDN -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+    
+    <!-- Custom font -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter+Tight">
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">   
+    <link rel="stylesheet" href="style_nav.css">
+    <link rel="stylesheet" href="style_ctrl.css">
+
+ 
+    <!-- Font Awesome JS -->
+    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/solid.js" integrity="sha384-tzzSw1/Vo+0N5UhStP3bvwWPq+uvzCMfrN1fEFe+xBmv1C/AtVX5K0uZtmcHitFZ" crossorigin="anonymous"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/fontawesome.js" integrity="sha384-6OIrr52G08NpOFSZdxxz1xdNSndlD4vdcf/q2myIUVO0VsqaGHJsB0RaBE01VTOY" crossorigin="anonymous"></script>
+    
+    <script src=" https://cdn.jsdelivr.net/npm/browser-scss@1.0.3/dist/browser-scss.min.js "></script>
+    <script src=https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js></script>
+    <script src="ctrl.js" type="text/javascript"></script>
+
+    <!-- Add portfolio/... when deploying -->
+    <script src="app.js" type="text/javascript"></script>
+
+    <!-- Plotly -->
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js" charset="utf-8"></script>
+
+    <script> 
+      $(function(){
+        $("#nav-placeholder").load("assets/navigation.html"); 
+      });
+    </script>
+
+    <script> 
+      $(function(){
+        $("#footer-placeholder").load("assets/footer.html"); 
+      });
+    </script>
+
+  </head>
+
+  
+  <body id="body">
+
+    <div id="nav-placeholder"></div>
+
+    <div class="algo-box">
+      <h1>Line-based image approximation</h1>
+      
+      <div id="line-approx-plot"></div>
+
+      <div id="line-approx-ctrl">
+        <input type="file" />
+        
+        <input type="checkbox" id="darkmode_checkbox"/>
+
+        <div class="nlines-slider">
+          <label>Number of lines</label>
+          <input type="range" id="cowbell" name="cowbell" min="0" max="5000" value="2000" step="10">
+        </div>
+
+        <div class="thickness-slider">
+          <label>Thickness</label>
+          <input type="range" id="cowbell" name="cowbell" min="1" max="2" value="1" step="10">
+        </div>
+      </div>
+
+    <div id="footer-placeholder"></div>
+
+    <!-- Add PATH when deploying -->
+    <script src="plot_line_approx.js" type="text/javascript"></script>
+    <script src="ctrl_line_approx.js" type="text/javascript"></script>
+
+  </body>
+</html>
